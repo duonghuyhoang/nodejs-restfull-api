@@ -6,8 +6,12 @@ const path = require("path");
 const dotenv = require("dotenv");
 const rfs = require("rotating-file-stream");
 const bodyParser = require("body-parser");
+const db = require("./src/configs/db.config");
+const NodeCache = require("node-cache");
 
 const apiRouter = require("./src/routes/router");
+
+db.connection();
 
 dotenv.config();
 
@@ -26,12 +30,33 @@ app.use(
     ? morgan("combined", { stream: accessLogStream })
     : morgan("tiny")
 );
-app.use(cors());
+
+const corsOptions = {
+  origin: "*",
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(bodyParser.json());
+
+const cache = new NodeCache();
+
+// app.use((req, res, next) => {
+//   const key = "__express__" + req.originalUrl || req.url;
+//   const cachedData = cache.get(key);
+//   if (cachedData) {
+//     return res.json(cachedData); // Gửi dữ liệu từ cache nếu tồn tại
+//   } else {
+//     res.sendResponse = res.json;
+//     res.json = (body) => {
+//       cache.set(key, body, 6000); // Lưu trữ dữ liệu vào cache trong 60 giây
+//       res.sendResponse(body);
+//     };
+//     next();
+//   }
+// });
 
 app.use("/api", apiRouter);
 app.get("/", (req, res) => {
